@@ -11,6 +11,7 @@
 # data encoding (BER, PER, ...)
 
 require_relative 'scanner'
+require_relative 'common'
 
 class Parser
 
@@ -19,8 +20,9 @@ class Parser
 	end
 
 	def run()
+		Debug.header("Lexemes")
 		@scanner.each_token() do |token|
-			puts "#{token.value}\t-- #{token.type}"
+			 Debug.line("#{token.value}\t-- #{token.type}")
 		end
 	end
 

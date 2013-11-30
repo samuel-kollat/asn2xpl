@@ -12,6 +12,18 @@
 
 class Debug
 
+	@@enabled = true
+
+	def self.method_missing( method, *arguments )
+		if(@@enabled)
+			DebugPrint.send(method, *arguments)
+		end
+	end
+
+end
+
+class DebugPrint
+
 	def self.section( line )
 		puts "\n**********"
 		puts line

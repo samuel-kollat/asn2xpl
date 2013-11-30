@@ -71,6 +71,8 @@ class Asn2Xpl
   end
 
   def print_user_options()
+    Debug.section("General information")
+
     head_string = "Selected encoding"
     head_string << "s" if @opts.encoding_options.count > 1
     Debug.header(head_string)

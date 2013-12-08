@@ -40,3 +40,6 @@ class DebugPrint
 	end
 
 end
+
+class ASNSyntaxError < Exception
+end

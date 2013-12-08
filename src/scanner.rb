@@ -13,7 +13,10 @@
 class Token
 	attr_reader :value, :type
 
-	@@keywords = %w(DEFINITIONS BEGIN END SEQUENCE INTEGER BOOLEAN)
+	@@keywords = %w(DEFINITIONS BEGIN END OPTIONAL SIZE FROM WITH COMPONENTS ABSENT)
+	@@basic_types = %w(BOOLEAN NULL INTEGER REAL ENUMERATED BIT OCTET STRING \
+		OBJECT IDENTIFIER RELATIVE-OID EXTERNAL EMBEDDED PDV CHARACTER UTCTIME GENERALIZEDTIME)
+	@@constructed_types = %w(CHOICE SEQUENCE SET OF)
 
 	def initialize( lexeme )
 		@value = lexeme
@@ -25,14 +28,26 @@ class Token
 	def get_type( lexeme )
 		if @@keywords.include? lexeme.upcase
 			:keyword
+		elsif @@basic_types.include? lexeme.upcase
+			:basic_type
+		elsif @@constructed_types.include? lexeme.upcase
+			:constructed_type
 		else
 			case lexeme
 			when "::="
 				:assingment
+			when "("
+				:leftpar
+			when ")"
+				:rightpar
+			when "["
+				:leftsqu
+			when "]"
+				:rightsqu
 			when "{"
-				:leftbr
+				:leftcur
 			when "}"
-				:rightbr
+				:rightcur
 			else
 				:custom
 			end
@@ -51,8 +66,10 @@ class Scanner
 			f.each_line do |line|
 				# remove comments
 				relevant_line = line.strip.gsub(/--.*/, "")
-				# commas to spaces
+				# commas to spaces, spaces aroud brackets and dots
 				preprocessed_line = relevant_line.gsub(/,/, " ")
+				preprocessed_line = preprocessed_line.gsub(/([\(\)\[\]\{\}])/, ' \1 ')
+				preprocessed_line = preprocessed_line.gsub(/(\.+)/, ' \1 ')
 				# tokenizing
 				preprocessed_line.split.each do |lexeme|
 					token = Token.new lexeme

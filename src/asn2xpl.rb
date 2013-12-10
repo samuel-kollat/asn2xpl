@@ -122,3 +122,6 @@ asn2xpl.print_user_options
 
 asn2xpl.parse
 asn2xpl.generate
+
+Debug.section("Done")
+

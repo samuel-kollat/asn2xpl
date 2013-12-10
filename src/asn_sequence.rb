@@ -16,21 +16,31 @@ class ASNSequence
 	attr_reader :name, :parent
 
   @@syntax = [:custom, :assingment, :keyword, :leftcur, :rightcur]
+  @@iteration_state = 4
+  @@xpl_sequence_number = 0
 
-	def initialize( name, parent )
+	def initialize( name, parent, state=0 )
 		@name = name
 		@children = []
 		@parent = parent
-    @state = 3  # start at left curly bracket
+    @state = state  # start at left curly bracket
 	end
 
   def closed?()
     @state >= @@syntax.size
   end
 
-  def add( token )
-    successor = self
+  def add_child( child )
+    @children << child
+  end
 
+  def add( token )
+    # Possible iteration of child objects
+    if(@state == @@iteration_state && token.type != :rightcur)
+      return nil
+    end
+    
+    # Syntax analysis
     if(token.type == @@syntax[@state])
 			syntax_error = case @state
 			when 0
@@ -41,7 +51,6 @@ class ASNSequence
       when 2
 				token.value != "SEQUENCE"
 			when 3
-        #successor = nil
         false
 			when 4 
 				false
@@ -57,14 +66,17 @@ class ASNSequence
 			raise ASNSyntaxError, token.value
 		end
 
-    return successor
+    return self
   end
 
 	def to_xpl( indent )
     indentation = create_indent(indent)
+    @@xpl_sequence_number += 1
 
     puts "#{indentation}<xpl:type name=\"#{@name}\">"
-    puts "#{indentation}  <xpl:record>" 
+    puts "#{indentation}  <xpl:record>"
+    puts "#{indentation}    <xpl:field name=\"Sequence#{@@xpl_sequence_number} type=\"UInt8\"/>"
+    puts "#{indentation}    <xpl:field name=\"Sequence#{@@xpl_sequence_number}Length type=\"UInt8\"/>"
     @children.each do |child|
       child.to_xpl(indent+2)
     end

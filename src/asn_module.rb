@@ -41,7 +41,7 @@ class ASNModule
       return nil
     end
     
-    # Syntax checking
+    # Syntax analysis
 		if(token.type == @@syntax[@state])
 			syntax_error = case @state
 			when 0

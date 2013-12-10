@@ -12,7 +12,8 @@
 
 class Metastabile
 
-  @@syntax = [:custom, :assingment, :constructed_type]
+  @@syntax1 = [:custom, :assingment, :constructed_type]
+  @@syntax2 = [:custom, :basic_type]
 
   def initialize()
     @name = ""
@@ -21,9 +22,11 @@ class Metastabile
 
   def add( token, parent )
     stabile_object = nil
+    syntax_error1 = true
+    syntax_error2 = true
 
-    if(token.type == @@syntax[@state])
-      syntax_error = case @state
+    if(token.type == @@syntax1[@state])
+      syntax_error1 = case @state
       when 0
         @name = token.value
         false
@@ -31,7 +34,7 @@ class Metastabile
         false
       when 2
         if(token.value == "SEQUENCE")
-          stabile_object = ASNSequence.new @name, parent
+          stabile_object = ASNSequence.new @name, parent, 3
           false
         else
           true
@@ -39,15 +42,27 @@ class Metastabile
       else
         true
       end
-      @state += 1
-    else
-      syntax_error = true
     end
     
-    if(syntax_error)  
+    if(token.type == @@syntax2[@state])
+      syntax_error2 = case @state
+      when 0
+        @name = token.value
+        false
+      when 1
+        stabile_object = ASNPair.new @name, parent, token.value, 2
+        false
+      else
+        true
+      end
+
+    end
+    
+    if(syntax_error1 and syntax_error2)  
       raise ASNSyntaxError, token.value
     end
 
+    @state += 1
     return stabile_object
   end
 

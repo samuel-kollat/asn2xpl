@@ -37,7 +37,6 @@ class Parser
 		 		if(@actual) # Object is known
           last_known = @actual
 		 			@actual = @actual.add(token)
-          @actual = @actual.parent if @actual and @actual.closed?
           if @actual.nil? # possible place of errors 
             metastabile = Metastabile.new
             @actual = metastabile.add(token, last_known) 
@@ -53,6 +52,7 @@ class Parser
             metastabile = nil
           end
 		 		end
+        @actual = @actual.parent if @actual and @actual.closed?
 		 	rescue ASNSyntaxError => error
 		 		puts "Syntax error: #{error}"
 		 		exit 1

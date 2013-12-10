@@ -15,6 +15,7 @@ require_relative 'common'
 
 require_relative 'asn_module'
 require_relative 'asn_sequence'
+require_relative 'asn_metastabile'
 
 class Parser
 
@@ -27,34 +28,43 @@ class Parser
 	def run()
 		Debug.header("Lexemes")
 		unknow_name = ""	# Name of next possible object 
-		last_know = @root	# Last know object
+		last_known = @root	# Last know object
+    metastabile = nil
 
 		@scanner.each_token() do |token|
 			Debug.line("#{token.value}\t-- #{token.type}")
 		 	begin
 		 		if(@actual) # Object is known
+          last_known = @actual
 		 			@actual = @actual.add(token)
-		 		else # Create Metastabile object
-		 			# !!!
-		 			if(token.type == :custom)
-		 				@unknow_name = token.value
-		 			elsif (token.type == :keyword)
-		 				@actual = case token.value
-		 				when "SEQUENCE"
-		 					ASNSequence.new unknow_name last_know
-		 				else
-		 					raise ASNSyntaxError, token.value
-		 				end
-		 				last_know.add_child(@actual)
-		 			else
-		 				raise ASNSyntaxError, token.value
-		 			end
+          @actual = @actual.parent if @actual and @actual.closed?
+          if @actual.nil? # possible place of errors 
+            metastabile = Metastabile.new
+            @actual = metastabile.add(token, last_known) 
+            if(@actual)
+              last_known.add_child(@actual)
+              metastabile = nil
+            end
+          end
+		 		else
+          @actual = metastabile.add(token, last_known)
+          if(@actual)
+            last_known.add_child(@actual)
+            metastabile = nil
+          end
 		 		end
 		 	rescue ASNSyntaxError => error
 		 		puts "Syntax error: #{error}"
 		 		exit 1
 		 	end
 		end
+
+    if(@actual != @root || !@root.closed?)
+      puts "Syntax error: Definitions after Module"
+      exit 1
+    end
+
+    return @root
 	end
 
 end # Class Parser

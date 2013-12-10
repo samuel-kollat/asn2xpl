@@ -11,23 +11,37 @@
 # data encoding (BER, PER, ...)
 
 class ASNModule
-	attr_reader :name
+	attr_reader :name, :parent
 
 	@@syntax = [:custom, :keyword, :assingment, :keyword, :keyword]
+  @@iteration_state = 4
 
 	def initialize()
 		@name = ""
 		@state = 0
 		@children = []
+    @parent = self
 	end
 
 	def add_name( name )
 		@name = name
 	end
 
-	def add( token )
-		successor = self
+  def add_child( child )
+    @children << child
+  end
 
+  def closed?()
+    @state >= @@syntax.size
+  end
+
+	def add( token )
+    # Possible iteration of child objects
+    if(@state == @@iteration_state && token.value != "END")
+      return nil
+    end
+    
+    # Syntax checking
 		if(token.type == @@syntax[@state])
 			syntax_error = case @state
 			when 0
@@ -35,27 +49,36 @@ class ASNModule
 				false
 			when 1
 				token.value != "DEFINITIONS"
+      when 2
+        false
 			when 3
-				successor = nil
 				token.value != "BEGIN"
 			when 4
 				token.value != "END"
 			else
-				false
+				true
 			end
 			@state += 1
 		else
-			syntax_error = true;
+			syntax_error = true
 		end
 
-		if(syntax_error == true)
+		if(syntax_error)
 			raise ASNSyntaxError, token.value
 		end
-		successor
+		
+    return self
 	end
 
-	def to_xpl()
-		"<xpl:module name=\"#{@name}\" xmlns:xpl=\"http://netfox.fit.vutbr.cz/2013/xplschema\">"
+	def to_xpl( indent )
+    indentation = create_indent(indent)
+    puts "#{indentation}<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
+    puts "#{indentation}<!-- BER encoding --> "
+		puts "#{indentation}<xpl:module name=\"#{@name}\" xmlns:xpl=\"http://netfox.fit.vutbr.cz/2013/xplschema\">"
+    @children.each do |child|
+      child.to_xpl(indent+1)
+    end
+    puts "#{indentation}</xpl:module>"
 	end
 
 end

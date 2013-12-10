@@ -43,3 +43,11 @@ end
 
 class ASNSyntaxError < Exception
 end
+
+def create_indent( indent )
+  indentation = ""
+  (0..indent-1).each do
+    indentation += "  "
+  end
+  return indentation
+end

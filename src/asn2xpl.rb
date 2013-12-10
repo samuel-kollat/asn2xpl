@@ -12,6 +12,7 @@
 require 'optparse'
 require_relative 'parser'
 require_relative 'common'
+require_relative 'generator'
 
 class OptParser
   attr_reader :encoding_options, :input_file, :option_parser
@@ -67,6 +68,7 @@ class Asn2Xpl
 
   def initialize()
     @opts = OptParser.new
+    @ast = nil  # Abstract Syntax Tree
     get_options
   end
 
@@ -89,12 +91,15 @@ class Asn2Xpl
     Debug.section("Parsing input ASN.1 file.")
 
     parser = Parser.new @opts.input_file
-    parser.run
+    @ast = parser.run
   end
 
   def generate()
     @opts.encoding_options.each_key() do |encoding|
       Debug.section("Genrating XPL code for #{encoding.to_s} encoding.")
+
+      generator = Generator.new @ast
+      generator.run(encoding)
     end
   end
 

@@ -3,82 +3,99 @@
 #
 # Samuel Kollat <xkolla04@stud.fit.vutbr.cz>
 #
-# 2013
+# 2014
 #
 # ASN.1 to XPL compilation
 # Input is a valid ASN.1 specification of a network protocol.
 # Output is a valid XPL document that takes into account particular
 # data encoding (BER, PER, ...)
 
+require_relative 'scanner'
+require_relative 'common'
+
+require_relative 'asn_modulemember'
+
 class ASNModule
-	attr_reader :name, :parent
+    attr_reader :name
 
-	@@syntax = [:custom, :keyword, :assingment, :keyword, :keyword]
-  @@iteration_state = 4
-
-	def initialize()
-		@name = ""
-		@state = 0
-		@children = []
-    @parent = self
-	end
-
-	def add_name( name )
-		@name = name
-	end
-
-  def add_child( child )
-    @children << child
-  end
-
-  def closed?()
-    @state >= @@syntax.size
-  end
-
-	def add( token )
-    # Possible iteration of child objects
-    if(@state == @@iteration_state && token.value != "END")
-      return nil
+    def initialize()
+        @name = ""
+        @children = []
+        @tags = []
     end
-    
-    # Syntax analysis
-		if(token.type == @@syntax[@state])
-			syntax_error = case @state
-			when 0
-				@name = token.value
-				false
-			when 1
-				token.value != "DEFINITIONS"
-      when 2
-        false
-			when 3
-				token.value != "BEGIN"
-			when 4
-				token.value != "END"
-			else
-				true
-			end
-			@state += 1
-		else
-			syntax_error = true
-		end
 
-		if(syntax_error)
-			raise ASNSyntaxError, token.value
-		end
-		
-    return self
-	end
-
-	def to_xpl( indent )
-    indentation = create_indent(indent)
-    puts "#{indentation}<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
-    puts "#{indentation}<!-- BER encoding --> "
-		puts "#{indentation}<xpl:module name=\"#{@name}\" xmlns:xpl=\"http://netfox.fit.vutbr.cz/2013/xplschema\">"
-    @children.each do |child|
-      child.to_xpl(indent+1)
+    def add_name( name )
+        @name = name
     end
-    puts "#{indentation}</xpl:module>"
-	end
+
+    def add_child( child )
+        @children << child
+    end
+
+    def run( scanner )
+        # Name
+        token = scanner.get_token
+        if token.type == :custom
+            @name = token.value
+        else
+            raise ASNSyntaxError, token.value
+        end
+
+        # Keyword
+        token = scanner.get_token
+        if token.type != :keyword || token.value != "DEFINITIONS"
+            raise ASNSyntaxError, token.value
+        end
+
+        # Possible TAGS
+        token = scanner.get_token
+        while token.type == :keyword
+            @tags << token
+            token = scanner.get_token
+        end
+        scanner.return_token token
+
+        # ::=
+        token = scanner.get_token
+        if token.type != :assingment
+            raise ASNSyntaxError, token.value
+        end
+
+        # Keyword
+        token = scanner.get_token
+        if token.type != :keyword || token.value != "BEGIN"
+            raise ASNSyntaxError, token.value
+        end
+
+        # Possible ModuleMembers
+        begin
+            module_member = ASNModuleMember.new self, self
+            module_member.run scanner
+            @children << module_member if module_member.valid?
+        end until module_member.empty?
+
+        # Keyword
+        token = scanner.get_token
+        if token.type != :keyword || token.value != "END"
+            raise ASNSyntaxError, token.value
+        end
+        
+        # End of ASN file
+        token = scanner.get_token
+        if token.type != :EOF
+            raise ASNSyntaxError, token.value
+        end
+    end
+
+    def to_xpl( indent )
+        indentation = create_indent(indent)
+        puts "#{indentation}<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
+        puts "#{indentation}<!-- BER encoding --> "
+        puts "#{indentation}<xpl:module name=\"#{@name}\" xmlns:xpl=\"http://netfox.fit.vutbr.cz/2013/xplschema\">"
+        @children.each do |child|
+          child.to_xpl(indent+1)
+        end
+        puts "#{indentation}</xpl:module>"
+    end
 
 end

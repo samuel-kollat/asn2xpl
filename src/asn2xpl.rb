@@ -2,7 +2,7 @@
 #
 # Samuel Kollat <xkolla04@stud.fit.vutbr.cz>
 #
-# 2013
+# 2014
 #
 # ASN.1 to XPL compilation
 # Input is a valid ASN.1 specification of a network protocol.
@@ -121,7 +121,7 @@ asn2xpl = Asn2Xpl.new
 asn2xpl.print_user_options
 
 asn2xpl.parse
-asn2xpl.generate
+#asn2xpl.generate
 
 Debug.section("Done")
 

@@ -69,8 +69,9 @@ class ASNModule
 
         # Possible ModuleMembers
         begin
-            module_member = ASNModuleMember.new self, self
+            module_member = ASNModuleMember.new self, self, :leftcur
             module_member.run scanner
+            module_member.empty?
             @children << module_member if module_member.valid?
         end until module_member.empty?
 

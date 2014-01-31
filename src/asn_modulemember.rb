@@ -16,8 +16,8 @@ require_relative 'asn_member'
 
 class ASNModuleMember < ASNMember
 
-	def initialize( parent, root )
-		super(parent, root)
+	def initialize( parent, root, type_terminator )
+		super(parent, root, type_terminator)
 	end
 
 	def run( scanner )
@@ -25,6 +25,7 @@ class ASNModuleMember < ASNMember
 		token = scanner.get_token
 		if token.type == :keyword && token.value == "END"
 			scanner.return_token token
+            return
 		# Start of ModuleMember
 		elsif token.type == :custom
 			@empty = false
@@ -50,17 +51,19 @@ class ASNModuleMember < ASNMember
 
         # Possible Members
         begin
-            member = ASNMember.new self, @root
+            member = ASNMember.new self, @root, :comma
             member.run scanner
             @children << member if member.valid?
-        end until module_member.empty?
+        end until member.empty?
 
         # }
         token = scanner.get_token
-        if token.type != :leftcur
+        if token.type != :rightcur
             raise ASNSyntaxError, token.value
         end
 
+        # ModuleMember successfully read
+        @valid = true
 	end
 
 end

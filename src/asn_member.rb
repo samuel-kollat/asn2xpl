@@ -17,8 +17,8 @@ require_relative 'asn_typeobject'
 class ASNMember < ASNTypeObject
 	attr_reader :parent, :root
 
-	def initialize( parent, root )
-		super()
+	def initialize( parent, root, type_terminator )
+		super(type_terminator)
 		@name = ""
 		@parent = parent
 		@root = root
@@ -26,7 +26,30 @@ class ASNMember < ASNTypeObject
 		@children = []
 	end
 
-	def run()
+	def run( scanner )
+		# Possible END
+		token = scanner.get_token
+		if token.type == :rightcur
+			scanner.return_token token
+            return
+		# Start of Member
+		elsif token.type == :custom
+			@empty = false
+			@name = token.value
+		else
+			raise ASNSyntaxError, token.value
+		end
+
+		# Type
+        parse_type( scanner )
+
+        # ,
+        token = scanner.get_token
+        if token.type != :comma
+        	raise ASNSyntaxError, token.value
+        end
+
+        @valid = true
 	end
 
 	def empty?()

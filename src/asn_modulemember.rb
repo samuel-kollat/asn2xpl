@@ -40,30 +40,7 @@ class ASNModuleMember < ASNMember
             raise ASNSyntaxError, token.value
         end
 
-        # Type
-        parse_type( scanner )
-
-        # {
-        token = scanner.get_token
-        if token.type != :leftcur
-            raise ASNSyntaxError, token.value
-        end
-
-        # Possible Members
-        begin
-            member = ASNMember.new self, @root, :comma
-            member.run scanner
-            @children << member if member.valid?
-        end until member.empty?
-
-        # }
-        token = scanner.get_token
-        if token.type != :rightcur
-            raise ASNSyntaxError, token.value
-        end
-
-        # ModuleMember successfully read
-        @valid = true
+        run_hierarchical scanner
 	end
 
 end

@@ -22,6 +22,7 @@ class ASNModule
         @name = ""
         @children = []
         @tags = []
+        @type = :module
     end
 
     def add_name( name )

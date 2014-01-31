@@ -14,12 +14,14 @@ require_relative 'common'
 require_relative 'specific_types'
 
 class ASNTypeObject
-    attr_accessor :type
+    attr_accessor :type, :type_terminator
 
     def initialize( type_terminator )
         @type = :undef
         @valid = false
         @hierarchical = false
+        @anonymous = false
+        @watch_anonymous = false
         @type_terminator = type_terminator
         @tags = []
     end
@@ -32,7 +34,16 @@ class ASNTypeObject
         return @hierarchical
     end
 
+    def anonymous?()
+        return @anonymous
+    end
+
     def parse_type( scanner )
+        parse_type_declaration scanner
+        parse_type_tags scanner
+    end
+
+    def parse_type_declaration( scanner )
         # First part of type
         token = scanner.get_token
         if token.type == :type 
@@ -40,37 +51,67 @@ class ASNTypeObject
             if token.value == "SEQUENCE"
                 self.extend Sequence
 
+                token_next = scanner.get_token
+                if token_next.type == :keyword && token_next.value == "OF"
+                    @hierarchical = true
+                    @type = :sequence_of
+                elsif token_next.type == :leftcur && @watch_anonymous
+                    @anonymous = true
+                    scanner.return_token token_next
+                    scanner.return_token token
+                    @type = :anonymous
+                else
+                    scanner.return_token token_next
+                    @type = :sequence
+                end 
+
             elsif token.value == "CHOICE"
                 self.extend Choice
+
+                token_next = scanner.get_token
+                if token_next.type == :leftcur && @watch_anonymous
+                    @anonymous = true
+                    scanner.return_token token_next
+                    scanner.return_token token
+                    @type = :anonymous
+                else
+                    scanner.return_token token_next
+                    @type = :choice
+                end 
+                
 
             elsif token.value == "OCTET"
                 token = scanner.get_token
                 if token.type == :type && token.value == "STRING"
                     self.extend OctetString
+                    @type = :octet_string
                 else
                     raise ASNSyntaxError, token.value
                 end 
 
             elsif token.value == "ENUMERATED"
                 self.extend Enumerated
+                @type = :enumerated
                 get_enumeration scanner
 
             elsif token.value == "INTEGER"
                 self.extend ASNInteger
+                @type = :integer
                 get_asn_integer scanner
 
             elsif token.value == "BOOLEAN"
                 self.extend ASNBoolean
+                @type = :boolean
 
             else
                 raise ASNSyntaxError, token.value
             end
-
-            @type = token.value.downcase.to_sym
         else
             raise ASNSyntaxError, token.value
         end
+    end
 
+    def parse_type_tags( scanner )
         # Possible tags
         token = scanner.get_token
         if token.type == :keyword
@@ -93,10 +134,18 @@ class ASNTypeObject
 
         # End of type declaration
         token = scanner.get_token
-        if token.type == @type_terminator
+        if token.type == @type_terminator || token.type == :rightcur
             scanner.return_token token
         else
             raise ASNSyntaxError, token.value
+        end
+    end
+
+    def to_xpl( indent )
+        indentation = create_indent(indent)
+        puts "#{indentation} #{@name} \[#{@type}\] \t|\t #{@tags}"
+        @children.each do |child|
+          child.to_xpl(indent+1)
         end
     end
 

@@ -40,15 +40,54 @@ class ASNMember < ASNTypeObject
 			raise ASNSyntaxError, token.value
 		end
 
-		# Type
-        parse_type( scanner )
+		# Type and possible hierarchy
+		@watch_anonymous = true	# type is eg. SEQUENCE { ... }
+        parse_type_declaration( scanner )
+        if hierarchical? || anonymous?
+        	hierarchical_member = ASNMember.new self, @root, :leftcur
+        	hierarchical_member.run_hierarchical scanner
+        	@children << hierarchical_member if hierarchical_member.valid?
+        end
+        parse_type_tags( scanner )
 
-        # ,
+        # , or }
         token = scanner.get_token
-        if token.type != :comma
+        if token.type != :comma && token.type != :rightcur
         	raise ASNSyntaxError, token.value
         end
 
+        # End of member and its parent
+        if token.type == :rightcur
+        	scanner.return_token token
+        end
+
+        @valid = true
+	end
+
+	def run_hierarchical( scanner )
+		# Type
+        parse_type( scanner )
+
+        # {
+        token = scanner.get_token
+        if token.type != :leftcur
+            raise ASNSyntaxError, token.value
+        end
+
+        # Possible Members
+        begin
+            member = ASNMember.new self, @root, :comma
+            member.run scanner
+            @children << member if member.valid?
+        end until member.empty?
+
+        # }
+        token = scanner.get_token
+        if token.type != :rightcur
+            raise ASNSyntaxError, token.value
+        end
+
+        # Successfully read
         @valid = true
 	end
 

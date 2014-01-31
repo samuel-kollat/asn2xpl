@@ -121,7 +121,7 @@ asn2xpl = Asn2Xpl.new
 asn2xpl.print_user_options
 
 asn2xpl.parse
-#asn2xpl.generate
+asn2xpl.generate
 
 Debug.section("Done")
 

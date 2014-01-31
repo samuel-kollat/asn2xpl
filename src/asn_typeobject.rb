@@ -51,6 +51,17 @@ class ASNTypeObject
                     raise ASNSyntaxError, token.value
                 end 
 
+            elsif token.value == "ENUMERATED"
+                self.extend Enumerated
+                get_enumeration scanner
+
+            elsif token.value == "INTEGER"
+                self.extend ASNInteger
+                get_asn_integer scanner
+
+            elsif token.value == "BOOLEAN"
+                self.extend ASNBoolean
+
             else
                 raise ASNSyntaxError, token.value
             end
@@ -65,6 +76,14 @@ class ASNTypeObject
         if token.type == :keyword
             if token.value == "OPTIONAL"
                 @tags << token.value.downcase.to_sym
+            elsif token.value == "DEFAULT"
+                @tags << token.value.downcase.to_sym
+                token = scanner.get_token
+                if token.type == :custom
+                     @tags << token.value
+                else
+                    raise ASNSyntaxError, token.value
+                end
             else
                 scanner.return_token token
             end
@@ -72,12 +91,12 @@ class ASNTypeObject
             scanner.return_token token
         end
 
-        # TODO - other parts of type declaration
-
         # End of type declaration
         token = scanner.get_token
         if token.type == @type_terminator
             scanner.return_token token
+        else
+            raise ASNSyntaxError, token.value
         end
     end
 

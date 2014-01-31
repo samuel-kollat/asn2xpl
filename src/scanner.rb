@@ -14,7 +14,7 @@ class Token
     attr_reader :value, :type
 
     @@keywords = %w(DEFINITIONS BEGIN END OPTIONAL SIZE FROM WITH COMPONENTS \
-                    ABSENT OF AUTOMATIC TAGS)
+                    ABSENT OF AUTOMATIC TAGS DEFAULT)
     @@types = %w(BOOLEAN NULL INTEGER REAL ENUMERATED BIT OCTET STRING \
         OBJECT IDENTIFIER RELATIVE-OID EXTERNAL EMBEDDED PDV CHARACTER UTCTIME \
         GENERALIZEDTIME IA5String CHOICE SEQUENCE SET)
@@ -26,6 +26,10 @@ class Token
 
     private
 
+    def numeric?()
+        Integer(@value) != nil rescue false
+    end
+
     def get_type( lexeme )
         if lexeme == :EOF
             :EOF
@@ -33,6 +37,8 @@ class Token
             :keyword
         elsif @@types.include? lexeme
             :type
+        elsif numeric?
+            :numeric
         else
             case lexeme
             when "::="
@@ -51,6 +57,12 @@ class Token
                 :rightcur
             when ","
                 :comma
+            when ".."
+                :range
+            when "MAX"
+                :maxrange
+            when "MIN"
+                :minrange
             else
                 :custom
             end
@@ -94,7 +106,7 @@ class Scanner
     end
 
     def return_token( token )
-        @cached_tokens.push token
+        @cached_tokens.insert(0, token)
     end
 
 end # Class Scanner

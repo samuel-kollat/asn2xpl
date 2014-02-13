@@ -17,6 +17,22 @@ module Sequence
     def self.extended( mod )
         Debug.line("Extended: Sequence type")
     end
+
+    def to_xpl( indent )
+        if not @name.empty?
+            indentation1 = create_indent(indent)
+            indentation2 = create_indent(indent+1)
+            puts "#{indentation1}<xpl:type name=\"#{@name}\" >"
+            puts "#{indentation2}<xpl:field name=\"#{@name}_type\" type=\"UINT8\" />"
+            puts "#{indentation2}<xpl:field name=\"#{@name}_length\" type=\"UINT8\" />"
+        end
+        @children.each do |child|
+          child.to_xpl(indent+1)
+        end
+        if not @name.empty?
+            puts "#{indentation1}</xpl:type>"
+        end
+    end
 end
 
 # ASN.1 Choice
@@ -24,12 +40,37 @@ module Choice
     def self.extended( mod )
         Debug.line("Extended: Choice type")
     end
+
+    def to_xpl( indent )
+        indentation1 = create_indent(indent)
+        indentation2 = create_indent(indent)
+        puts "#{indentation1}<xpl:record>"
+        puts "#{indentation2}<xpl:field name=\"#{@name}_type\" type=\"UINT8\" />"
+        puts "#{indentation2}<xpl:field name=\"#{@name}_length\" type=\"UINT8\" />"
+        @children.each do |child|
+          child.to_xpl(indent+1)
+        end
+        puts "#{indentation1}</xpl:record>"
+    end
 end
 
 # ASN.1 Octet String
 module OctetString
     def self.extended( mod )
         Debug.line("Extended: Octet String type")
+    end
+
+    def to_xpl( indent )
+        indentation1 = create_indent(indent)
+        indentation2 = create_indent(indent+1)
+        indentation3 = create_indent(indent+2)
+        puts "#{indentation1}<xpl:record>"
+        puts "#{indentation2}<xpl:field name=\"#{@name}_type\" type=\"UINT8\" />"
+        puts "#{indentation2}<xpl:field name=\"#{@name}_length\" type=\"UINT8\" >"
+        puts "#{indentation3}<xpl:post>Property.#{@name}_length = #{@name}_length</xpl:post>"
+        puts "#{indentation2}</xpl:field>"
+        puts "#{indentation2}<xpl:stream name=\"#{@name}\" lenghtBy=\"property\" length=\"Property.#{@name}_lenght\" type=\"string\" />"
+        puts "#{indentation1}<xpl:record>"
     end
 end
 
@@ -70,6 +111,11 @@ module Enumerated
             raise ASNSyntaxError, token.value
         end
 
+    end
+
+    def to_xpl( indent )
+        indentation = create_indent(indent)
+        puts "#{indentation}<???>"
     end
 end
 
@@ -135,6 +181,16 @@ module ASNInteger
     def get_asn_integer( scanner )
         get_asn_range scanner
     end
+
+    def to_xpl( indent )
+        indentation1 = create_indent(indent)
+        indentation2 = create_indent(indent+1)
+        puts "#{indentation1}<xpl:record>"
+        puts "#{indentation2}<xpl:field name=\"#{@name}_type\" type=\"UINT8\" />"
+        puts "#{indentation2}<xpl:field name=\"#{@name}_length\" type=\"UINT8\" />"
+        puts "#{indentation2}<xpl:field name=\"#{@name}\" type=\"UINT8\" />"
+        puts "#{indentation1}</xpl:record>"
+    end
   
 end
 
@@ -142,5 +198,15 @@ end
 module ASNBoolean
     def self.extended( mod )
         Debug.line("Extended: Boolean type")
+    end
+
+    def to_xpl( indent )
+        indentation1 = create_indent(indent)
+        indentation2 = create_indent(indent+1)
+        puts "#{indentation1}<xpl:record>"
+        puts "#{indentation2}<xpl:field name=\"#{@name}_type\" type=\"UINT8\" />"
+        puts "#{indentation2}<xpl:field name=\"#{@name}_length\" type=\"UINT8\" />"
+        puts "#{indentation2}<xpl:field name=\"#{@name}\" type=\"UINT8\" />"
+        puts "#{indentation1}</xpl:record>"
     end
 end

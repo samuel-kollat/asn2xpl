@@ -141,12 +141,4 @@ class ASNTypeObject
         end
     end
 
-    def to_xpl( indent )
-        indentation = create_indent(indent)
-        puts "#{indentation} #{@name} \[#{@type}\] \t|\t #{@tags}"
-        @children.each do |child|
-          child.to_xpl(indent+1)
-        end
-    end
-
 end

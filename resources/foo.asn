@@ -7,14 +7,11 @@ BEGIN
 
 Entry ::= SEQUENCE {
   entryIdentifier  OCTET STRING OPTIONAL,
-  returnedObject
-    ENUMERATED {subscriber, stateOrProvince, locality, street, businessCategory}
-      DEFAULT subscriber,
   hierarchyLevel   INTEGER(0..MAX) OPTIONAL,
   hierarchyBelow   BOOLEAN DEFAULT FALSE,
-  choice           SEQUENCE OF CHOICE {attribute  INTEGER, -- Attribute
-                                       family     BOOLEAN, -- Family 
-                                      }
+  options          SEQUENCE {attribute  INTEGER, -- Attribute
+                           family     BOOLEAN, -- Family 
+                          }
 }
 
 END

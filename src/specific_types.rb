@@ -69,8 +69,8 @@ module OctetString
         puts "#{indentation2}<xpl:field name=\"#{@name}_length\" type=\"UINT8\" >"
         puts "#{indentation3}<xpl:post>Property.#{@name}_length = #{@name}_length</xpl:post>"
         puts "#{indentation2}</xpl:field>"
-        puts "#{indentation2}<xpl:stream name=\"#{@name}\" lenghtBy=\"property\" length=\"Property.#{@name}_lenght\" type=\"string\" />"
-        puts "#{indentation1}<xpl:record>"
+        puts "#{indentation2}<xpl:field name=\"#{@name}\" type=\"String(Property.#{@name}_lenght)\" />"
+        puts "#{indentation1}</xpl:record>"
     end
 end
 
